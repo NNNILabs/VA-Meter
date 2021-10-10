@@ -234,10 +234,13 @@ U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 // End of constructor list
 
+const float vref = 2.5;
+unsigned long realPosition = 0;
+
 
 void setup(void) {
   u8g2.begin();
-
+  u8g2.setFont(u8g2_font_ncenB08_tr);
   Wire.begin();
   Serial.begin(9600);
   if (adcSensor.begin() == true)
@@ -250,24 +253,90 @@ void setup(void) {
     while (1); // stall out forever
   }
 }
+float getVal(byte channel = 0, byte mode = 0){
+  uint16_t val = 0;
+  switch (channel)
+  {
+  case 0:
+    val = adcSensor.getSingleEnded(0);
+    break;
+  case 1:
+    val = adcSensor.getSingleEnded(1);
+    break;
+  case 2:
+    val = adcSensor.getSingleEnded(2);
+    break;
+  case 3:
+    val = adcSensor.getSingleEnded(3);
+    break;
+  default:
+    val = adcSensor.getSingleEnded(0);
+    break;
+  }
+  // modes:
+  // 0 - V mode, scale input from -50V to +50V (00.00 V) 
+  // 1 - mA mode, scale input from 0mA to 500mA (000 mA)
+  // 2 - uA mode, scale input from 0uA to 1000uA (0000 uA)
+  float res = 0.0;
+  switch (mode)
+  {
+  case 0:
+    res = (val * vref)/((2^12)-1);
+    break;
+  
+  default:
+    break;
+  }
+  return res;
+}
 
-void loop(void) {
+void encoderTick(){
   static long oldPosition  = -999;
   long newPosition = myEnc.read();
   if (newPosition != oldPosition) {
     oldPosition = newPosition;
     Serial.println(newPosition);
+    realPosition = newPosition/4;
   }
-  u8g2.clearBuffer();					// clear the internal memory
-  u8g2.setFont(u8g2_font_ncenB08_tr);	// choose a suitable font
-  u8g2.drawStr(0,10,"Hello World!");	// write something to the internal memory
-  char cstr[16];
-  itoa(newPosition, cstr, 10);
-  u8g2.drawStr(100,10, cstr);
-  u8g2.sendBuffer();					// transfer internal memory to the display
+}
+
+void displayDraw(float value0, float value1, float value2, float value3, byte mode){
+  u8g2.clearBuffer();
+  char cstr[4];
+  switch (mode)
+  {
+  case 0:
+    memset(&cstr[0], 0, sizeof(cstr));
+    itoa(value0, cstr, 10);
+    u8g2.drawStr(0,10, cstr);
+    u8g2.drawStr(30,10, "V0");
+
+    memset(&cstr[0], 0, sizeof(cstr));
+    itoa(value1, cstr, 10);
+    u8g2.drawStr(0,20, cstr);
+    u8g2.drawStr(0,20, "V1");
+
+    memset(&cstr[0], 0, sizeof(cstr));
+    itoa(value2, cstr, 10);
+    u8g2.drawStr(0,40, cstr);
+    u8g2.drawStr(0,40, "V2");
+
+    memset(&cstr[0], 0, sizeof(cstr));
+    itoa(value3, cstr, 10);
+    u8g2.drawStr(0,60, cstr);
+    u8g2.drawStr(0,60, "V3");
+    break;
+  
+  default:
+    break;
+  }
+
+  u8g2.sendBuffer();
+}
+
+void loop(void) {
+  encoderTick();
+  displayDraw(getVal(0), getVal(1), getVal(2), getVal(3), 0);
   delay(50);
-  uint16_t channel_A3 = adcSensor.getSingleEnded(3);
-  Serial.print("A3:");
-  Serial.println(channel_A3);
 }
 
