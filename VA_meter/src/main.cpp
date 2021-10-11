@@ -25,7 +25,7 @@ Encoder myEnc(2, 3);
 //U8G2_SSD1306_128X64_NONAME_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);
 //U8G2_SSD1306_128X64_NONAME_F_3W_SW_SPI u8g2(U8G2_R0, /* clock=*/ 13, /* data=*/ 11, /* cs=*/ 10, /* reset=*/ 8);
 //U8G2_SSD1306_128X64_NONAME_F_3W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 10, /* reset=*/ 8);
-//U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 //U8G2_SSD1306_128X64_ALT0_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);   // same as the NONAME variant, but may solve the "every 2nd line skipped" problem
 //U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ 13, /* data=*/ 11, /* reset=*/ 8);
 //U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);   // All Boards without Reset of the Display
@@ -36,7 +36,7 @@ Encoder myEnc(2, 3);
 //U8G2_SSD1306_128X64_VCOMH0_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);	// same as the NONAME variant, but maximizes setContrast() range
 //U8G2_SSD1306_128X64_ALT0_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);	// same as the NONAME variant, but may solve the "every 2nd line skipped" problem
 //U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);
-U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
+//U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 //U8G2_SH1106_128X64_VCOMH0_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);		// same as the NONAME variant, but maximizes setContrast() range
 //U8G2_SH1106_128X64_WINSTAR_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);		// same as the NONAME variant, but uses updated SH1106 init sequence
 //U8G2_SH1106_72X40_WISE_F_4W_HW_SPI u8g2(U8G2_R0, /* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);
@@ -241,20 +241,36 @@ unsigned long realPosition = 0;
 void setup(void) {
   u8g2.begin();
   u8g2.setFont(u8g2_font_ncenB08_tr);
+
+  u8g2.clearBuffer();
+  u8g2.drawStr(0,30, "Booting up...");
+  u8g2.sendBuffer();
+
   Wire.begin();
   Serial.begin(9600);
   if (adcSensor.begin() == true)
   {
     Serial.println("Device found. I2C connections are good.");
+    u8g2.clearBuffer();
+    u8g2.drawStr(0,30, "ADC connected!");
+    u8g2.sendBuffer();
   }
   else
   {
     Serial.println("Device not found. Check wiring.");
+    u8g2.clearBuffer();
+    u8g2.drawStr(0,30, "Can't connect to ADC!");
+    u8g2.sendBuffer();
     while (1); // stall out forever
   }
+
+    u8g2.clearBuffer();
+    u8g2.drawStr(0,30, "Init complete");
+    u8g2.sendBuffer();
 }
 float getVal(byte channel = 0, byte mode = 0){
   uint16_t val = 0;
+  adcSensor.setGain(4);
   switch (channel)
   {
   case 0:
@@ -273,6 +289,7 @@ float getVal(byte channel = 0, byte mode = 0){
     val = adcSensor.getSingleEnded(0);
     break;
   }
+  
   // modes:
   // 0 - V mode, scale input from -50V to +50V (00.00 V) 
   // 1 - mA mode, scale input from 0mA to 500mA (000 mA)
@@ -336,6 +353,7 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
 
 void loop(void) {
   encoderTick();
+  Serial.println(getVal(0));
   displayDraw(getVal(0), getVal(1), getVal(2), getVal(3), 0);
   delay(50);
 }
