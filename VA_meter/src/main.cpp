@@ -234,7 +234,7 @@ U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 // End of constructor list
 
-const float vref = 2.5;
+const float vref = 3.3;
 unsigned long realPosition = 0;
 
 
@@ -353,8 +353,16 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
 
 void loop(void) {
   encoderTick();
-  Serial.println(getVal(0));
-  displayDraw(getVal(0), getVal(1), getVal(2), getVal(3), 0);
+  Serial.print("Vals: ");
+  Serial.print(getVal(0));
+  Serial.print("; ");
+  Serial.print(getVal(1));
+  Serial.print("; ");
+  Serial.print(getVal(2));
+  Serial.print("; ");
+  Serial.print(getVal(3));
+  Serial.println();
+  // displayDraw(getVal(0), getVal(1), getVal(2), getVal(3), 0);
   delay(50);
 }
 
