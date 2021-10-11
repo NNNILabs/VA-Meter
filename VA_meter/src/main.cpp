@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <U8g2lib.h>
-#include <SparkFun_ADS1015_Arduino_Library.h>
+#include <Adafruit_ADS1X15.h>
 #include <Wire.h>
 #include <Encoder.h>
 
@@ -11,7 +11,7 @@
 #include <Wire.h>
 #endif
 
-ADS1015 adcSensor;
+Adafruit_ADS1015 adcSensor;
 
 Encoder myEnc(2, 3);
 
@@ -270,23 +270,23 @@ void setup(void) {
 }
 float getVal(byte channel = 0, byte mode = 0){
   uint16_t val = 0;
-  adcSensor.setGain(4);
+  adcSensor.setGain(GAIN_ONE);
   switch (channel)
   {
   case 0:
-    val = adcSensor.getSingleEnded(0);
+    val = adcSensor.readADC_SingleEnded(0);
     break;
   case 1:
-    val = adcSensor.getSingleEnded(1);
+    val = adcSensor.readADC_SingleEnded(1);
     break;
   case 2:
-    val = adcSensor.getSingleEnded(2);
+    val = adcSensor.readADC_SingleEnded(2);
     break;
   case 3:
-    val = adcSensor.getSingleEnded(3);
+    val = adcSensor.readADC_SingleEnded(3);
     break;
   default:
-    val = adcSensor.getSingleEnded(0);
+    val = adcSensor.readADC_SingleEnded(0);
     break;
   }
   
@@ -298,7 +298,7 @@ float getVal(byte channel = 0, byte mode = 0){
   switch (mode)
   {
   case 0:
-    res = (val * vref)/((2^12)-1);
+    res = adcSensor.computeVolts(val);
     break;
   
   default:
@@ -317,7 +317,7 @@ void encoderTick(){
   }
 }
 
-void displayDraw(float value0, float value1, float value2, float value3, byte mode){
+void displayDraw(float value0, float value1, float value2, float value3, byte mode = 0){
   u8g2.clearBuffer();
   char cstr[4];
   switch (mode)
@@ -331,17 +331,17 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
     memset(&cstr[0], 0, sizeof(cstr));
     itoa(value1, cstr, 10);
     u8g2.drawStr(0,20, cstr);
-    u8g2.drawStr(0,20, "V1");
+    u8g2.drawStr(30,20, "V1");
 
     memset(&cstr[0], 0, sizeof(cstr));
     itoa(value2, cstr, 10);
     u8g2.drawStr(0,40, cstr);
-    u8g2.drawStr(0,40, "V2");
+    u8g2.drawStr(30,40, "V2");
 
     memset(&cstr[0], 0, sizeof(cstr));
     itoa(value3, cstr, 10);
     u8g2.drawStr(0,60, cstr);
-    u8g2.drawStr(0,60, "V3");
+    u8g2.drawStr(30,60, "V3");
     break;
   
   default:
@@ -353,14 +353,21 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
 
 void loop(void) {
   encoderTick();
+  float val1 = getVal(0);
+  float val2 = getVal(1);
+  float val3 = getVal(2);
+  float val4 = getVal(3);
+
+  displayDraw(val1, val2, val3, val4);
+
   Serial.print("Vals: ");
-  Serial.print(getVal(0));
+  Serial.print(val1);
   Serial.print("; ");
-  Serial.print(getVal(1));
+  Serial.print(val2);
   Serial.print("; ");
-  Serial.print(getVal(2));
+  Serial.print(val3);
   Serial.print("; ");
-  Serial.print(getVal(3));
+  Serial.print(val4);
   Serial.println();
   // displayDraw(getVal(0), getVal(1), getVal(2), getVal(3), 0);
   delay(50);
