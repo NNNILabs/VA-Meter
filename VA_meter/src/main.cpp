@@ -93,41 +93,66 @@ void encoderTick(){
 void displayDraw(float value0, float value1, float value2, float value3, byte mode = 0){
   u8g2.clearBuffer();
   char cstr[4];
+  String buff = "";
   switch (mode)
   {
   case 0:
     memset(&cstr[0], 0, sizeof(cstr));
-    itoa(value0, cstr, 10);
+    buff = "";
+    // itoa(value0, cstr, 10);
+    buff.concat(value0);
+    buff.toCharArray(cstr, 4);
     u8g2.drawStr(0,10, cstr);
     u8g2.drawStr(30,10, "V0");
 
 
     Serial.print(cstr);
+    Serial.print(", ");
+    Serial.print(value0);
     Serial.print("; ");
 
 
     memset(&cstr[0], 0, sizeof(cstr));
-    itoa(value1, cstr, 10);
-    u8g2.drawStr(0,20, cstr);
-    u8g2.drawStr(30,20, "V1");
+    buff = "";
+    // itoa(value1, cstr, 10);
+    buff.concat(value1);
+    buff.toCharArray(cstr, 4);
+    u8g2.drawStr(0, 25, cstr);
+    u8g2.drawStr(30, 25, "V1");
+
 
     Serial.print(cstr);
+    Serial.print(", ");
+    Serial.print(value1);
     Serial.print("; ");
 
     memset(&cstr[0], 0, sizeof(cstr));
-    itoa(value2, cstr, 10);
+    buff = "";
+    // itoa(value2, cstr, 10);
+    buff.concat(value2);
+    buff.toCharArray(cstr, 4);
     u8g2.drawStr(0,40, cstr);
     u8g2.drawStr(30,40, "V2");
 
+
     Serial.print(cstr);
+    Serial.print(", ");
+    Serial.print(value2);
     Serial.print("; ");
 
+
     memset(&cstr[0], 0, sizeof(cstr));
-    itoa(value3, cstr, 10);
-    u8g2.drawStr(0,60, cstr);
-    u8g2.drawStr(30,60, "V3");
+    buff = "";
+    // itoa(value3, cstr, 10);
+    buff.concat(value3);
+    buff.toCharArray(cstr, 4);
+    u8g2.drawStr(0,55, cstr);
+    u8g2.drawStr(30,5, "V3");
+
 
     Serial.print(cstr);
+    Serial.print(", ");
+    Serial.print(value3);
     Serial.print("; ");
     break;
     
