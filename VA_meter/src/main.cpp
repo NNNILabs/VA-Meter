@@ -14,13 +14,13 @@
 Adafruit_ADS1015 adcSensor;
 
 Encoder myEnc(2, 3);
+const byte buttnEnc = 4;
 
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 
-const float vref = 3.3;
 unsigned long realPosition = 0;
-
+const float maxVolt = 50.0;
 
 void setup(void) {
   pinMode(LED_BUILTIN, OUTPUT);
@@ -72,6 +72,7 @@ float getVal(byte channel = 0, byte mode = 0){
   {
   case 0:
     res = adcSensor.computeVolts(val);
+    res = (maxVolt/1.25)*(res-1.25);
     break;
   
   default:
@@ -85,75 +86,31 @@ void encoderTick(){
   long newPosition = myEnc.read();
   if (newPosition != oldPosition) {
     oldPosition = newPosition;
-    Serial.println(newPosition);
     realPosition = newPosition/4;
   }
 }
 
 void displayDraw(float value0, float value1, float value2, float value3, byte mode = 0){
   u8g2.clearBuffer();
-  char cstr[4];
-  String buff = "";
   switch (mode)
   {
   case 0:
-    memset(&cstr[0], 0, sizeof(cstr));
-    buff = "";
-    // itoa(value0, cstr, 10);
-    buff.concat(value0);
-    buff.toCharArray(cstr, 4);
-    u8g2.drawStr(0,10, cstr);
-    u8g2.drawStr(30,10, "V0");
+    u8g2.setCursor(0,10);
+    u8g2.print(value0, 3);
+    u8g2.drawStr(45,10, "V0");
 
+    u8g2.setCursor(0,25); 
+    u8g2.print(value1, 3);
+    u8g2.drawStr(45, 25, "V1");
 
-    Serial.print(cstr);
-    Serial.print(", ");
-    Serial.print(value0);
-    Serial.print("; ");
+    u8g2.setCursor(0,40);
+    u8g2.print(value2, 3);
+    u8g2.drawStr(45,40, "V2");
 
+    u8g2.setCursor(0,55);
+    u8g2.print(value3, 3);
+    u8g2.drawStr(45,55, "V3");
 
-    memset(&cstr[0], 0, sizeof(cstr));
-    buff = "";
-    // itoa(value1, cstr, 10);
-    buff.concat(value1);
-    buff.toCharArray(cstr, 4);
-    u8g2.drawStr(0, 25, cstr);
-    u8g2.drawStr(30, 25, "V1");
-
-
-    Serial.print(cstr);
-    Serial.print(", ");
-    Serial.print(value1);
-    Serial.print("; ");
-
-    memset(&cstr[0], 0, sizeof(cstr));
-    buff = "";
-    // itoa(value2, cstr, 10);
-    buff.concat(value2);
-    buff.toCharArray(cstr, 4);
-    u8g2.drawStr(0,40, cstr);
-    u8g2.drawStr(30,40, "V2");
-
-
-    Serial.print(cstr);
-    Serial.print(", ");
-    Serial.print(value2);
-    Serial.print("; ");
-
-
-    memset(&cstr[0], 0, sizeof(cstr));
-    buff = "";
-    // itoa(value3, cstr, 10);
-    buff.concat(value3);
-    buff.toCharArray(cstr, 4);
-    u8g2.drawStr(0,55, cstr);
-    u8g2.drawStr(30,5, "V3");
-
-
-    Serial.print(cstr);
-    Serial.print(", ");
-    Serial.print(value3);
-    Serial.print("; ");
     break;
     
   default:
