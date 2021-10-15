@@ -23,6 +23,7 @@ unsigned long realPosition = 0;
 const float maxVolt = 50.0;
 
 void setup(void) {
+  pinMode(buttnEnc, INPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
   u8g2.begin();
@@ -33,6 +34,7 @@ void setup(void) {
   Wire.begin();
   Serial.begin(9600);
   adcSensor.begin();
+  
 
   u8g2.drawStr(22, 25, "V/I DIGITIZER");
   u8g2.drawStr(13, 40, "hardware by NNNI");
@@ -81,41 +83,168 @@ float getVal(byte channel = 0, byte mode = 0){
   return res;
 }
 
-void encoderTick(){
+byte encoderTick(){
   static long oldPosition  = -999;
   long newPosition = myEnc.read();
   if (newPosition != oldPosition) {
     oldPosition = newPosition;
     realPosition = newPosition/4;
   }
+
+  const unsigned int longPressInterval = 500;
+  static byte status = 0;
+  static byte oldStatus = 0;
+  static unsigned long gpTimer = 0; 
+  byte ret = 0;
+
+  if(digitalRead(buttnEnc) == LOW && status == 0){
+    status = 1;
+    gpTimer = millis();
+  }else if (!digitalRead(buttnEnc) && status == 1 && millis() - gpTimer >= 20)
+  {
+    status = 2;
+    gpTimer = millis();
+  }else if(!digitalRead(buttnEnc) && status == 2 && millis() - gpTimer >= longPressInterval){
+    status = 3;
+  }else if(digitalRead(buttnEnc) == HIGH){
+    status = 0;
+  }
+  if(status != oldStatus){
+    
+    if(status == 3){
+      Serial.println("pressed");
+      ret = 2;
+    }else if(status == 0 && oldStatus != 3){
+      Serial.println("click");
+      ret = 1;
+    }else{
+      ret = 0;
+    }
+    oldStatus = status;
+  }
+return ret;
 }
 
-void displayDraw(float value0, float value1, float value2, float value3, byte mode = 0){
+void displayDraw(float value0, float value1, float value2, float value3, byte mode0 = 0, byte mode1 = 0, byte mode2 = 0, byte mode3 = 0){
+  static bool locked = true;
+  static unsigned long millisTick = 0;
+  if(encoderTick() == 2){
+    locked = false;
+    millisTick = millis();
+  }
+  if(millis() - millisTick >= 5000){
+    locked = true;
+  }
   u8g2.clearBuffer();
-  switch (mode)
+  
+  if(!locked){
+    u8g2.setFont(u8g2_font_unifont_t_symbols);
+    u8g2.setFontPosTop();
+    u8g2.drawUTF8(0, 100, "🔓");
+    u8g2.setFont(u8g2_font_ncenB08_tr);
+  }else{
+    u8g2.setFont(u8g2_font_unifont_t_symbols);
+    u8g2.setFontPosTop();
+    u8g2.drawUTF8(0, 100, "🔒");
+    u8g2.setFont(u8g2_font_ncenB08_tr);
+  }
+  // modes:
+  // 0 - V mode, scale input from -50V to +50V (00.00 V) 
+  // 1 - mA mode, scale input from 0mA to 500mA (000 mA)
+  // 2 - uA mode, scale input from 0uA to 1000uA (0000 uA)
+  switch (mode0)
   {
   case 0:
     u8g2.setCursor(0,10);
     u8g2.print(value0, 3);
-    u8g2.drawStr(45,10, "V0");
-
-    u8g2.setCursor(0,25); 
-    u8g2.print(value1, 3);
-    u8g2.drawStr(45, 25, "V1");
-
-    u8g2.setCursor(0,40);
-    u8g2.print(value2, 3);
-    u8g2.drawStr(45,40, "V2");
-
-    u8g2.setCursor(0,55);
-    u8g2.print(value3, 3);
-    u8g2.drawStr(45,55, "V3");
-
+    u8g2.drawStr(45,10, "V - A");
     break;
-    
+  case 1:
+    u8g2.setCursor(0,10);
+    u8g2.print(value0, 3);
+    u8g2.drawStr(45,10, "mA - A");
+    break;
+  case 2:
+    u8g2.setCursor(0,10);
+    u8g2.print(value0, 3);
+    u8g2.drawStr(45,10, "uA - A");
+    break;
   default:
+    u8g2.setCursor(0,10);
+    u8g2.print(value0, 3);
+    u8g2.drawStr(45,10, "V - A");
     break;
   }
+
+  switch (mode1)
+  {
+  case 0:    
+    u8g2.setCursor(0,25); 
+    u8g2.print(value1, 3);
+    u8g2.drawStr(45, 25, "V - B");
+    break;
+  case 1: 
+    u8g2.setCursor(0,25); 
+    u8g2.print(value1, 3);
+    u8g2.drawStr(45, 25, "mA - B");
+    break;
+  case 2:
+    u8g2.setCursor(0,25); 
+    u8g2.print(value1, 3);
+    u8g2.drawStr(45, 25, "uA - B");
+  default:
+    u8g2.setCursor(0,25); 
+    u8g2.print(value1, 3);
+    u8g2.drawStr(45, 25, "V - B");
+    break;
+  }
+  switch (mode2)
+  {
+  case 0:
+    u8g2.setCursor(0,40);
+    u8g2.print(value2, 3);
+    u8g2.drawStr(45,40, "V - C");
+    break;
+  case 1:
+    u8g2.setCursor(0,40);
+    u8g2.print(value2, 3);
+    u8g2.drawStr(45,40, "mA - C");
+    break;
+  case 2:
+    u8g2.setCursor(0,40);
+    u8g2.print(value2, 3);
+    u8g2.drawStr(45,40, "uA - C");
+  default:
+    u8g2.setCursor(0,40);
+    u8g2.print(value2, 3);
+    u8g2.drawStr(45,40, "V - C");
+    break;
+  }
+  
+  switch (mode3)
+  {
+  case 0:
+    u8g2.setCursor(0,55);
+    u8g2.print(value3, 3);
+    u8g2.drawStr(45,55, "V - D");
+    break;
+  case 1:
+    u8g2.setCursor(0,55);
+    u8g2.print(value3, 3);
+    u8g2.drawStr(45,55, "mA - D");
+    break;
+  case 2:
+    u8g2.setCursor(0,55);
+    u8g2.print(value3, 3);
+    u8g2.drawStr(45,55, "uA - D");
+    break;
+  default:
+    u8g2.setCursor(0,55);
+    u8g2.print(value3, 3);
+    u8g2.drawStr(45,55, "V - D");
+    break;
+  }
+
 
   u8g2.sendBuffer();
 }
@@ -127,10 +256,7 @@ void loop(void) {
   float val3 = getVal(2);
   float val4 = getVal(3);
 
-  Serial.print("Vals: ");
   displayDraw(val1, val2, val3, val4);
-  Serial.println();
-  // displayDraw(getVal(0), getVal(1), getVal(2), getVal(3), 0);
   delay(50);
 }
 
