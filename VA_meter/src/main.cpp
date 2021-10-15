@@ -3,7 +3,7 @@
 #include <Adafruit_ADS1X15.h>
 #include <Wire.h>
 #include <Encoder.h>
-
+//hello there
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
 #endif
