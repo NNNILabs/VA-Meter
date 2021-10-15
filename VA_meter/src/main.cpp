@@ -20,6 +20,7 @@ U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 
 unsigned long realPosition = 0;
+unsigned long oldRealPosition = 0;
 const float maxVolt = 50.0;
 
 void setup(void) {
@@ -28,7 +29,7 @@ void setup(void) {
   digitalWrite(LED_BUILTIN, HIGH);
   u8g2.begin();
   u8g2.setFont(u8g2_font_ncenB08_tr);
-
+  u8g2.enableUTF8Print();
   u8g2.clearBuffer();
 
   Wire.begin();
@@ -88,6 +89,7 @@ byte encoderTick(){
   long newPosition = myEnc.read();
   if (newPosition != oldPosition) {
     oldPosition = newPosition;
+    oldRealPosition = realPosition;
     realPosition = newPosition/4;
   }
 
@@ -128,8 +130,28 @@ return ret;
 void displayDraw(float value0, float value1, float value2, float value3, byte mode0 = 0, byte mode1 = 0, byte mode2 = 0, byte mode3 = 0){
   static bool locked = true;
   static unsigned long millisTick = 0;
-  if(encoderTick() == 2){
+  static byte currSelection = 0;
+  bool enter = false;
+  if(oldRealPosition > realPosition){
+    oldRealPosition -= 1;
+    currSelection--;
+    millisTick = millis();
+  }else if(oldRealPosition < realPosition){  
+    oldRealPosition += 1;
+    currSelection++;
+    millisTick = millis();
+  }
+  
+
+  if(currSelection > 3){
+    currSelection = 0;
+  }
+  byte encoderBtnVal = encoderTick();
+  if(encoderBtnVal == 2){
     locked = false;
+    millisTick = millis();
+  }else if(encoderBtnVal == 1){
+    enter = true;
     millisTick = millis();
   }
   if(millis() - millisTick >= 5000){
@@ -138,135 +160,129 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
   u8g2.clearBuffer();
   
   if(!locked){
-    u8g2.setFont(u8g2_font_unifont_t_symbols);
+    u8g2.setFont(u8g2_font_open_iconic_thing_2x_t);
     u8g2.setFontPosTop();
-    u8g2.drawUTF8(100, 10, "🔓");
+    u8g2.drawGlyph(100, 10, 68);
     u8g2.setFont(u8g2_font_ncenB08_tr);
   }else{
-    u8g2.setFont(u8g2_font_unifont_t_symbols);
+    u8g2.setFont(u8g2_font_open_iconic_thing_2x_t);
     u8g2.setFontPosTop();
-    u8g2.drawUTF8(100, 10, "🔒");
+    u8g2.drawGlyph(100, 10, 67);
     u8g2.setFont(u8g2_font_ncenB08_tr);
   }
   // modes:
   // 0 - V mode, scale input from -50V to +50V (00.00 V) 
   // 1 - mA mode, scale input from 0mA to 500mA (000 mA)
   // 2 - uA mode, scale input from 0uA to 1000uA (0000 uA)
+  u8g2.setCursor(0,10);
+  u8g2.print("A: ");
+  u8g2.print(value0, 3);
   switch (mode0)
   {
   case 0:
-    u8g2.setCursor(0,10);
-    u8g2.print("A: ");
-    u8g2.print(value0, 3);
     u8g2.print("V");
     break;
   case 1:
-    u8g2.setCursor(0,10);
-    u8g2.print("A: ");
-    u8g2.print(value0, 3);
     u8g2.print("mA");
     break;
   case 2:
-    u8g2.setCursor(0,10);
-    u8g2.print("A: ");
-    u8g2.print(value0, 3);
     u8g2.print("uA");
     break;
   default:
-    u8g2.setCursor(0,10);
-    u8g2.print("A: ");
-    u8g2.print(value0, 3);
+    u8g2.print("V");
+    break;
+  }
+  if(!locked && currSelection == 0){
+    u8g2.setFont(u8g2_font_open_iconic_arrow_1x_t);
+    u8g2.setFontPosTop();
+    u8g2.drawGlyph(u8g2.tx, u8g2.ty, 77);
+    u8g2.setFont(u8g2_font_ncenB08_tr);
+  }
+
+
+  u8g2.setCursor(0,25);
+  u8g2.print("B: ");
+  u8g2.print(value1, 3);
+  switch (mode1)
+  {
+  case 0:    
+    u8g2.print("V");
+    break;
+  case 1: 
+    u8g2.print("mA");
+    break;
+  case 2:
+    u8g2.print("uA");
+    break;
+  default:
     u8g2.print("V");
     break;
   }
 
-  switch (mode1)
-  {
-  case 0:    
-    u8g2.setCursor(0,25);
-    u8g2.print("B: ");
-    u8g2.print(value1, 3);
-    u8g2.print("V");
-    break;
-  case 1: 
-    u8g2.setCursor(0,25);
-    u8g2.print("B: ");
-    u8g2.print(value1, 3);
-    u8g2.print("mA");
-    break;
-  case 2:
-    u8g2.setCursor(0,25);
-    u8g2.print("B: ");
-    u8g2.print(value1, 3);
-    u8g2.print("uA");
-  default:
-    u8g2.setCursor(0,25);
-    u8g2.print("B: "); 
-    u8g2.print(value1, 3);
-    u8g2.print("V");
-    break;
+  if(!locked && currSelection == 1){
+    u8g2.setFont(u8g2_font_open_iconic_arrow_1x_t);
+    u8g2.setFontPosTop();
+    u8g2.drawGlyph(u8g2.tx, u8g2.ty, 77);
+    u8g2.setFont(u8g2_font_ncenB08_tr);
   }
+
+
+  u8g2.setCursor(0,40);
+  u8g2.print("C: ");
+  u8g2.print(value2, 3);
   switch (mode2)
   {
   case 0:
-    u8g2.setCursor(0,40);
-    u8g2.print("C: ");
-    u8g2.print(value2, 3);
     u8g2.print("V");
     break;
   case 1:
-    u8g2.setCursor(0,40);
-    u8g2.print("C: ");
-    u8g2.print(value2, 3);
     u8g2.print("mA");
     break;
   case 2:
-    u8g2.setCursor(0,40);
-    u8g2.print("C: ");
-    u8g2.print(value2, 3);
     u8g2.print("uA");
+    break;
   default:
-    u8g2.setCursor(0,40);
-    u8g2.print("C: ");
-    u8g2.print(value2, 3);
     u8g2.print("V");
     break;
   }
   
+  if(!locked && currSelection == 2){
+    u8g2.setFont(u8g2_font_open_iconic_arrow_1x_t);
+    u8g2.setFontPosTop();
+    u8g2.drawGlyph(u8g2.tx, u8g2.ty, 77);
+    u8g2.setFont(u8g2_font_ncenB08_tr);
+  }
+
+  u8g2.setCursor(0,55);
+  u8g2.print("D: ");
+  u8g2.print(value3, 3);
   switch (mode3)
   {
   case 0:
-    u8g2.setCursor(0,55);
-    u8g2.print("D: ");
-    u8g2.print(value3, 3);
     u8g2.print("V");
     break;
   case 1:
-    u8g2.setCursor(0,55);
-    u8g2.print("D: ");
-    u8g2.print(value3, 3);
     u8g2.print("mA");
     break;
   case 2:
-    u8g2.setCursor(0,55);
-    u8g2.print("D: ");
-    u8g2.print(value3, 3);
     u8g2.print("uA");
     break;
   default:
-    u8g2.setCursor(0,55);
-    u8g2.print("D: ");
-    u8g2.print(value3, 3);
     u8g2.print("V");
     break;
   }
 
+  if(!locked && currSelection == 3){
+    u8g2.setFont(u8g2_font_open_iconic_arrow_1x_t);
+    u8g2.setFontPosTop();
+    u8g2.drawGlyph(u8g2.tx, u8g2.ty, 77);
+    u8g2.setFont(u8g2_font_ncenB08_tr);
+  }
 
   u8g2.sendBuffer();
 }
 
 void loop(void) {
-  encoderTick();
   float val1 = getVal(0);
   float val2 = getVal(1);
   float val3 = getVal(2);
@@ -275,4 +291,6 @@ void loop(void) {
   displayDraw(val1, val2, val3, val4);
   delay(50);
 }
+
+
 
