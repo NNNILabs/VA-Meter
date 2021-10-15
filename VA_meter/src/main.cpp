@@ -140,12 +140,12 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
   if(!locked){
     u8g2.setFont(u8g2_font_unifont_t_symbols);
     u8g2.setFontPosTop();
-    u8g2.drawUTF8(0, 100, "🔓");
+    u8g2.drawUTF8(100, 10, "🔓");
     u8g2.setFont(u8g2_font_ncenB08_tr);
   }else{
     u8g2.setFont(u8g2_font_unifont_t_symbols);
     u8g2.setFontPosTop();
-    u8g2.drawUTF8(0, 100, "🔒");
+    u8g2.drawUTF8(100, 10, "🔒");
     u8g2.setFont(u8g2_font_ncenB08_tr);
   }
   // modes:
@@ -156,68 +156,80 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
   {
   case 0:
     u8g2.setCursor(0,10);
+    u8g2.print("A: ");
     u8g2.print(value0, 3);
-    u8g2.drawStr(45,10, "V - A");
+    u8g2.print("V");
     break;
   case 1:
     u8g2.setCursor(0,10);
+    u8g2.print("A: ");
     u8g2.print(value0, 3);
-    u8g2.drawStr(45,10, "mA - A");
+    u8g2.print("mA");
     break;
   case 2:
     u8g2.setCursor(0,10);
+    u8g2.print("A: ");
     u8g2.print(value0, 3);
-    u8g2.drawStr(45,10, "uA - A");
+    u8g2.print("uA");
     break;
   default:
     u8g2.setCursor(0,10);
+    u8g2.print("A: ");
     u8g2.print(value0, 3);
-    u8g2.drawStr(45,10, "V - A");
+    u8g2.print("V");
     break;
   }
 
   switch (mode1)
   {
   case 0:    
-    u8g2.setCursor(0,25); 
+    u8g2.setCursor(0,25);
+    u8g2.print("B: ");
     u8g2.print(value1, 3);
-    u8g2.drawStr(45, 25, "V - B");
+    u8g2.print("V");
     break;
   case 1: 
-    u8g2.setCursor(0,25); 
+    u8g2.setCursor(0,25);
+    u8g2.print("B: ");
     u8g2.print(value1, 3);
-    u8g2.drawStr(45, 25, "mA - B");
+    u8g2.print("mA");
     break;
   case 2:
-    u8g2.setCursor(0,25); 
+    u8g2.setCursor(0,25);
+    u8g2.print("B: ");
     u8g2.print(value1, 3);
-    u8g2.drawStr(45, 25, "uA - B");
+    u8g2.print("uA");
   default:
-    u8g2.setCursor(0,25); 
+    u8g2.setCursor(0,25);
+    u8g2.print("B: "); 
     u8g2.print(value1, 3);
-    u8g2.drawStr(45, 25, "V - B");
+    u8g2.print("V");
     break;
   }
   switch (mode2)
   {
   case 0:
     u8g2.setCursor(0,40);
+    u8g2.print("C: ");
     u8g2.print(value2, 3);
-    u8g2.drawStr(45,40, "V - C");
+    u8g2.print("V");
     break;
   case 1:
     u8g2.setCursor(0,40);
+    u8g2.print("C: ");
     u8g2.print(value2, 3);
-    u8g2.drawStr(45,40, "mA - C");
+    u8g2.print("mA");
     break;
   case 2:
     u8g2.setCursor(0,40);
+    u8g2.print("C: ");
     u8g2.print(value2, 3);
-    u8g2.drawStr(45,40, "uA - C");
+    u8g2.print("uA");
   default:
     u8g2.setCursor(0,40);
+    u8g2.print("C: ");
     u8g2.print(value2, 3);
-    u8g2.drawStr(45,40, "V - C");
+    u8g2.print("V");
     break;
   }
   
@@ -225,23 +237,27 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
   {
   case 0:
     u8g2.setCursor(0,55);
+    u8g2.print("D: ");
     u8g2.print(value3, 3);
-    u8g2.drawStr(45,55, "V - D");
+    u8g2.print("V");
     break;
   case 1:
     u8g2.setCursor(0,55);
+    u8g2.print("D: ");
     u8g2.print(value3, 3);
-    u8g2.drawStr(45,55, "mA - D");
+    u8g2.print("mA");
     break;
   case 2:
     u8g2.setCursor(0,55);
+    u8g2.print("D: ");
     u8g2.print(value3, 3);
-    u8g2.drawStr(45,55, "uA - D");
+    u8g2.print("uA");
     break;
   default:
     u8g2.setCursor(0,55);
+    u8g2.print("D: ");
     u8g2.print(value3, 3);
-    u8g2.drawStr(45,55, "V - D");
+    u8g2.print("V");
     break;
   }
 
