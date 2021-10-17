@@ -11,17 +11,30 @@
 #include <Wire.h>
 #endif
 
+
+const float maxVolt = 50.0;
+const byte buttnEnc = 4;
+const float idealVref = 1.25;
+const float AVref = 1.19;
+const float BVref = 1.20;
+const float CVref = 1.21;
+const float DVref = 1.19;
+
 Adafruit_ADS1015 adcSensor;
 
 Encoder myEnc(2, 3);
-const byte buttnEnc = 4;
+
+
 
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 
 unsigned long realPosition = 0;
 unsigned long oldRealPosition = 0;
-const float maxVolt = 50.0;
+
+
+
+
 
 void setup(void) {
   pinMode(buttnEnc, INPUT);
@@ -45,24 +58,30 @@ void setup(void) {
   digitalWrite(LED_BUILTIN, LOW);
 }
 float getVal(byte channel = 0, byte mode = 0){
-  uint16_t val = 0;
+  int16_t val = 0;
+  float chanVref = 0.0;
   adcSensor.setGain(GAIN_ONE);
   switch (channel)
   {
   case 0:
     val = adcSensor.readADC_SingleEnded(0);
+    chanVref = AVref;
     break;
   case 1:
     val = adcSensor.readADC_SingleEnded(1);
+    chanVref = BVref;
     break;
   case 2:
     val = adcSensor.readADC_SingleEnded(2);
+    chanVref = CVref;
     break;
   case 3:
     val = adcSensor.readADC_SingleEnded(3);
+    chanVref = DVref;
     break;
   default:
     val = adcSensor.readADC_SingleEnded(0);
+    chanVref = AVref;
     break;
   }
   
@@ -74,8 +93,7 @@ float getVal(byte channel = 0, byte mode = 0){
   switch (mode)
   {
   case 0:
-    res = adcSensor.computeVolts(val);
-    res = (maxVolt/1.25)*(res-1.25);
+    res = ((adcSensor.computeVolts(val)-chanVref)*(maxVolt/idealVref));
     break;
   
   default:
