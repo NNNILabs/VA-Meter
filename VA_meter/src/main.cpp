@@ -13,12 +13,14 @@
 
 
 const float maxVolt = 50.0;
+const unsigned int ohmsFormA = 1;
+const unsigned int ohmsForuA = 1000;
 const byte buttnEnc = 4;
 const float idealVref = 1.25;
 const float AVref = 1.19;
-const float BVref = 1.20;
-const float CVref = 1.21;
-const float DVref = 1.19;
+const float BVref = 1.18;
+const float CVref = 1.19;
+const float DVref = 1.20;
 
 Adafruit_ADS1015 adcSensor;
 
@@ -31,10 +33,10 @@ U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 unsigned long realPosition = 0;
 unsigned long oldRealPosition = 0;
-
-
-
-
+byte modeA = 0;
+byte modeB = 0;
+byte modeC = 0;
+byte modeD = 0;
 
 void setup(void) {
   pinMode(buttnEnc, INPUT);
@@ -89,14 +91,23 @@ float getVal(byte channel = 0, byte mode = 0){
   // 0 - V mode, scale input from -50V to +50V (00.00 V) 
   // 1 - mA mode, scale input from 0mA to 500mA (000 mA)
   // 2 - uA mode, scale input from 0uA to 1000uA (0000 uA)
+  // adc reading / resistor value
+  // 1 ohm resistor for 1mA to 500mA range
+  // 1K for 1uA to 1000uA range
   float res = 0.0;
   switch (mode)
   {
   case 0:
     res = ((adcSensor.computeVolts(val)-chanVref)*(maxVolt/idealVref));
     break;
-  
+  case 1:
+    res = (adcSensor.computeVolts(val)/ohmsFormA);
+    break;
+  case 2:
+    res = (adcSensor.computeVolts(val)/ohmsForuA);
+    break;
   default:
+    res = ((adcSensor.computeVolts(val)-chanVref)*(maxVolt/idealVref));
     break;
   }
   return res;
@@ -159,19 +170,23 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
     currSelection++;
     millisTick = millis();
   }
-  
 
   if(currSelection > 3){
     currSelection = 0;
   }
+
   byte encoderBtnVal = encoderTick();
-  if(encoderBtnVal == 2){
+  if(encoderBtnVal == 2 && locked){
     locked = false;
     millisTick = millis();
-  }else if(encoderBtnVal == 1){
+  }else if(encoderBtnVal == 1 && !locked && !enter){
     enter = true;
     millisTick = millis();
+  }else if(encoderBtnVal == 1 && !locked && enter){
+    enter = false;
+    millisTick = millis();
   }
+
   if(millis() - millisTick >= 5000){
     locked = true;
   }
@@ -195,6 +210,11 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
   u8g2.setCursor(0,10);
   u8g2.print("A: ");
   u8g2.print(value0, 3);
+  if(!locked && currSelection == 0 && enter){
+    u8g2.setDrawColor(0);
+  }else{
+    u8g2.setDrawColor(1);
+  }
   switch (mode0)
   {
   case 0:
@@ -301,12 +321,12 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
 }
 
 void loop(void) {
-  float val1 = getVal(0);
-  float val2 = getVal(1);
-  float val3 = getVal(2);
-  float val4 = getVal(3);
+  float val1 = getVal(0, modeA);
+  float val2 = getVal(1, modeB);
+  float val3 = getVal(2, modeC);
+  float val4 = getVal(3, modeD);
 
-  displayDraw(val1, val2, val3, val4);
+  displayDraw(val1, val2, val3, val4, modeA, modeB, modeC, modeD);
   delay(50);
 }
 
