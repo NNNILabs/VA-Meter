@@ -388,7 +388,7 @@ void loop(void) {
   float val3 = getVal(2, modeC);
   float val4 = getVal(3, modeD);
 
-  displayDraw(12.345, 5.4678, 9.1011, 12.131415, modeA, modeB, modeC, modeD);
+  displayDraw(val1, val2, val3, val4, modeA, modeB, modeC, modeD);
   delay(50);
 }
 
