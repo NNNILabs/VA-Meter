@@ -16,7 +16,10 @@ const float maxVolt = 50.0;
 const unsigned int ohmsFormA = 1;
 const unsigned int ohmsForuA = 1000;
 const byte buttnEnc = 4;
-const float idealVref = 1.25;
+const float idealVrefA = 1.25;
+const float idealVrefB = 1.25;
+const float idealVrefC = 1.25;
+const float idealVrefD = 1.25;
 const float AVref = 1.19;
 const float BVref = 1.18;
 const float CVref = 1.19;
@@ -31,6 +34,10 @@ Encoder myEnc(2, 3);
 U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0, /* reset=*/ U8X8_PIN_NONE);
 
 
+//U8G2_SSD1306_128X64_NONAME_F_4W_SW_SPI u8g2(U8G2_R0, /* clock=*/ 13, /* data=*/ 11, /* cs=*/ 10, /* dc=*/ 9, /* reset=*/ 8);
+
+
+
 unsigned long realPosition = 0;
 unsigned long oldRealPosition = 0;
 byte modeA = 0;
@@ -39,7 +46,7 @@ byte modeC = 0;
 byte modeD = 0;
 
 void setup(void) {
-  pinMode(buttnEnc, INPUT);
+  pinMode(buttnEnc, INPUT_PULLUP);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
   u8g2.begin();
@@ -49,41 +56,50 @@ void setup(void) {
 
   Wire.begin();
   Serial.begin(9600);
+
+
+  
   adcSensor.begin();
   
-
   u8g2.drawStr(22, 25, "V/I DIGITIZER");
   u8g2.drawStr(13, 40, "hardware by NNNI");
   u8g2.drawStr(18, 52, "software by DDL");
   u8g2.sendBuffer();
+  u8g2.setFontPosTop();
   delay(1000);
   digitalWrite(LED_BUILTIN, LOW);
 }
 float getVal(byte channel = 0, byte mode = 0){
   int16_t val = 0;
   float chanVref = 0.0;
+  float chanIdealVref = 0;
   adcSensor.setGain(GAIN_ONE);
   switch (channel)
   {
   case 0:
     val = adcSensor.readADC_SingleEnded(0);
     chanVref = AVref;
+    chanIdealVref = idealVrefA;
     break;
   case 1:
     val = adcSensor.readADC_SingleEnded(1);
     chanVref = BVref;
+    chanIdealVref = idealVrefB;
     break;
   case 2:
     val = adcSensor.readADC_SingleEnded(2);
     chanVref = CVref;
+    chanIdealVref = idealVrefC;
     break;
   case 3:
     val = adcSensor.readADC_SingleEnded(3);
     chanVref = DVref;
+    chanIdealVref = idealVrefD;
     break;
   default:
     val = adcSensor.readADC_SingleEnded(0);
     chanVref = AVref;
+    chanIdealVref = idealVrefA;
     break;
   }
   
@@ -98,7 +114,7 @@ float getVal(byte channel = 0, byte mode = 0){
   switch (mode)
   {
   case 0:
-    res = ((adcSensor.computeVolts(val)-chanVref)*(maxVolt/idealVref));
+    res = ((adcSensor.computeVolts(val)-chanVref)*(maxVolt/chanIdealVref));
     break;
   case 1:
     res = (adcSensor.computeVolts(val)/ohmsFormA);
@@ -107,7 +123,7 @@ float getVal(byte channel = 0, byte mode = 0){
     res = (adcSensor.computeVolts(val)/ohmsForuA);
     break;
   default:
-    res = ((adcSensor.computeVolts(val)-chanVref)*(maxVolt/idealVref));
+    res = ((adcSensor.computeVolts(val)-chanVref)*(maxVolt/chanIdealVref));
     break;
   }
   return res;
@@ -159,8 +175,10 @@ return ret;
 void displayDraw(float value0, float value1, float value2, float value3, byte mode0 = 0, byte mode1 = 0, byte mode2 = 0, byte mode3 = 0){
   static bool locked = true;
   static unsigned long millisTick = 0;
-  static byte currSelection = 0;
-  bool enter = false;
+  static int currSelection = 0;
+  static int lastSelection = 0;
+  static int currentEntered = -1;
+
   if(oldRealPosition > realPosition){
     oldRealPosition -= 1;
     currSelection--;
@@ -171,50 +189,69 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
     millisTick = millis();
   }
 
-  if(currSelection > 3){
+  if(currSelection > 3 && currentEntered == -1){
     currSelection = 0;
+  }else if(currSelection < 0 && currentEntered == -1){
+    currSelection = 3;
+  }else if(currSelection > 2 && currentEntered > -1){
+    currSelection = 0;
+  }else if(currSelection < 0 && currentEntered > -1){
+    currSelection = 2;
   }
 
   byte encoderBtnVal = encoderTick();
   if(encoderBtnVal == 2 && locked){
     locked = false;
     millisTick = millis();
-  }else if(encoderBtnVal == 1 && !locked && !enter){
-    enter = true;
+  }else if(encoderBtnVal == 1 && !locked && currentEntered == -1){
+    currentEntered = currSelection;
+    lastSelection = currSelection;
+    currSelection = 0;
     millisTick = millis();
-  }else if(encoderBtnVal == 1 && !locked && enter){
-    enter = false;
+  }else if(encoderBtnVal == 1 && !locked && currentEntered >= 0){
+    currentEntered = -1;
+    currSelection = lastSelection;
     millisTick = millis();
+  }
+
+  if(currentEntered >= 0){
+    switch (currentEntered)
+    {
+    case 0:
+      modeA = currSelection;
+      break;
+    case 1:
+      modeB = currSelection;
+      break;
+    case 2:
+      modeC = currSelection;
+      break;
+    case 3:
+      modeD = currSelection;
+      break;
+    default:
+      break;
+    }
   }
 
   if(millis() - millisTick >= 5000){
     locked = true;
+    currentEntered = -1;
+    currSelection = 0;
   }
+
   u8g2.clearBuffer();
   
-  if(!locked){
-    u8g2.setFont(u8g2_font_open_iconic_thing_2x_t);
-    u8g2.setFontPosTop();
-    u8g2.drawGlyph(100, 10, 68);
-    u8g2.setFont(u8g2_font_ncenB08_tr);
-  }else{
-    u8g2.setFont(u8g2_font_open_iconic_thing_2x_t);
-    u8g2.setFontPosTop();
-    u8g2.drawGlyph(100, 10, 67);
-    u8g2.setFont(u8g2_font_ncenB08_tr);
-  }
   // modes:
   // 0 - V mode, scale input from -50V to +50V (00.00 V) 
   // 1 - mA mode, scale input from 0mA to 500mA (000 mA)
   // 2 - uA mode, scale input from 0uA to 1000uA (0000 uA)
-  u8g2.setCursor(0,10);
+  u8g2.setCursor(0,5);
   u8g2.print("A: ");
   u8g2.print(value0, 3);
-  if(!locked && currSelection == 0 && enter){
-    u8g2.setDrawColor(0);
-  }else{
-    u8g2.setDrawColor(1);
-  }
+
+  byte oldX = u8g2.tx;
+
   switch (mode0)
   {
   case 0:
@@ -230,17 +267,23 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
     u8g2.print("V");
     break;
   }
-  if(!locked && currSelection == 0){
+  if(currentEntered == 0){
+    u8g2.drawLine(oldX, u8g2.ty + 10, u8g2.tx, u8g2.ty + 10);
+  }
+  
+  if((!locked && currSelection == 0 && currentEntered == -1) || currentEntered == 0){
     u8g2.setFont(u8g2_font_open_iconic_arrow_1x_t);
-    u8g2.setFontPosTop();
     u8g2.drawGlyph(u8g2.tx, u8g2.ty, 77);
     u8g2.setFont(u8g2_font_ncenB08_tr);
   }
 
 
-  u8g2.setCursor(0,25);
+  u8g2.setCursor(0,20);
   u8g2.print("B: ");
   u8g2.print(value1, 3);
+
+  oldX = u8g2.tx;
+
   switch (mode1)
   {
   case 0:    
@@ -256,18 +299,23 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
     u8g2.print("V");
     break;
   }
+  if(currentEntered == 1){
+    u8g2.drawLine(oldX, u8g2.ty + 10, u8g2.tx, u8g2.ty + 10);
+  }
 
-  if(!locked && currSelection == 1){
+  if((!locked && currSelection == 1 && currentEntered == -1) || currentEntered == 1){
     u8g2.setFont(u8g2_font_open_iconic_arrow_1x_t);
-    u8g2.setFontPosTop();
     u8g2.drawGlyph(u8g2.tx, u8g2.ty, 77);
     u8g2.setFont(u8g2_font_ncenB08_tr);
   }
 
 
-  u8g2.setCursor(0,40);
+  u8g2.setCursor(0,35);
   u8g2.print("C: ");
   u8g2.print(value2, 3);
+
+  oldX = u8g2.tx;
+
   switch (mode2)
   {
   case 0:
@@ -283,17 +331,23 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
     u8g2.print("V");
     break;
   }
+  if(currentEntered == 2){
+    u8g2.drawLine(oldX, u8g2.ty + 10, u8g2.tx, u8g2.ty + 10);
+  }
   
-  if(!locked && currSelection == 2){
+  
+  if((!locked && currSelection == 2 && currentEntered == -1) || currentEntered == 2){
     u8g2.setFont(u8g2_font_open_iconic_arrow_1x_t);
-    u8g2.setFontPosTop();
     u8g2.drawGlyph(u8g2.tx, u8g2.ty, 77);
     u8g2.setFont(u8g2_font_ncenB08_tr);
   }
 
-  u8g2.setCursor(0,55);
+  u8g2.setCursor(0,50);
   u8g2.print("D: ");
   u8g2.print(value3, 3);
+
+  oldX = u8g2.tx;
+
   switch (mode3)
   {
   case 0:
@@ -309,11 +363,19 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
     u8g2.print("V");
     break;
   }
+  if(currentEntered == 3){
+    u8g2.drawLine(oldX, u8g2.ty + 10, u8g2.tx, u8g2.ty + 10);
+  }
 
-  if(!locked && currSelection == 3){
+  if((!locked && currSelection == 3 && currentEntered == -1) || currentEntered == 3){
     u8g2.setFont(u8g2_font_open_iconic_arrow_1x_t);
-    u8g2.setFontPosTop();
     u8g2.drawGlyph(u8g2.tx, u8g2.ty, 77);
+    u8g2.setFont(u8g2_font_ncenB08_tr);
+  }
+
+  if(!locked){
+    u8g2.setFont(u8g2_font_open_iconic_thing_2x_t);
+    u8g2.drawGlyph(100, 10, 68);
     u8g2.setFont(u8g2_font_ncenB08_tr);
   }
 
@@ -326,7 +388,7 @@ void loop(void) {
   float val3 = getVal(2, modeC);
   float val4 = getVal(3, modeD);
 
-  displayDraw(val1, val2, val3, val4, modeA, modeB, modeC, modeD);
+  displayDraw(12.345, 5.4678, 9.1011, 12.131415, modeA, modeB, modeC, modeD);
   delay(50);
 }
 
