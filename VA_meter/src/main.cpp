@@ -17,8 +17,16 @@
 // adjust these constants for calibration and different pins
 Encoder myEnc(2, 3);
 const float maxVolt = 50.0;
-const unsigned int ohmsFormA = 1;
-const unsigned int ohmsForuA = 1000;
+const float ohmsFormA = 1.0;
+const float AmAconst = 1.0;
+const float BmAconst = 1.0;
+const float CmAconst = 1.0;
+const float DmAconst = 1.0;
+const float AuAconst = 1.0;
+const float BuAconst = 1.0;
+const float CuAconst = 1.0;
+const float DuAconst = 1.0;
+const float ohmsForuA = 1000.0;
 const byte buttnEnc = 4;
 const float idealVrefA = 1.25;
 const float idealVrefB = 1.25;
@@ -28,6 +36,7 @@ const float AVref = 1.19;
 const float BVref = 1.18;
 const float CVref = 1.19;
 const float DVref = 1.20;
+
 
 Adafruit_ADS1015 adcSensor;
 
@@ -87,6 +96,8 @@ float getVal(byte channel = 0, byte mode = 0)
   int16_t val = 0;
   float chanVref = 0.0;
   float chanIdealVref = 0;
+  float chanelmAconst = 1.0;
+  float chaneluAconst = 1.0;
   adcSensor.setGain(GAIN_ONE);
   switch (channel)
   {
@@ -94,26 +105,36 @@ float getVal(byte channel = 0, byte mode = 0)
     val = adcSensor.readADC_SingleEnded(0);
     chanVref = AVref;
     chanIdealVref = idealVrefA;
+    chanelmAconst = AmAconst;
+    chaneluAconst = AuAconst;
     break;
   case 1:
     val = adcSensor.readADC_SingleEnded(1);
     chanVref = BVref;
     chanIdealVref = idealVrefB;
+    chanelmAconst = BmAconst;
+    chaneluAconst = BuAconst;
     break;
   case 2:
     val = adcSensor.readADC_SingleEnded(2);
     chanVref = CVref;
     chanIdealVref = idealVrefC;
+    chanelmAconst = CmAconst;
+    chaneluAconst = CuAconst;
     break;
   case 3:
     val = adcSensor.readADC_SingleEnded(3);
     chanVref = DVref;
     chanIdealVref = idealVrefD;
+    chanelmAconst = DmAconst;
+    chaneluAconst = DuAconst;
     break;
   default:
     val = adcSensor.readADC_SingleEnded(0);
     chanVref = AVref;
     chanIdealVref = idealVrefA;
+    chanelmAconst = AmAconst;
+    chaneluAconst = AuAconst;
     break;
   }
 
@@ -124,11 +145,11 @@ float getVal(byte channel = 0, byte mode = 0)
     res = ((adcSensor.computeVolts(val) - chanVref) * (maxVolt / chanIdealVref));
     break;
   case 1:
-    res = (adcSensor.computeVolts(val) / ohmsFormA);
+    res = (adcSensor.computeVolts(val) / ohmsFormA) * chanelmAconst;
     res = res * 1000;
     break;
   case 2:
-    res = (adcSensor.computeVolts(val) / ohmsForuA);
+    res = (adcSensor.computeVolts(val) / ohmsForuA) * chaneluAconst;
     break;
   default:
     res = ((adcSensor.computeVolts(val) - chanVref) * (maxVolt / chanIdealVref));
