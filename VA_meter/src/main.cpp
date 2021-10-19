@@ -285,7 +285,10 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
   // 2 - uA mode, scale input from 0uA to 1000uA (0000 uA)
   u8g2.setCursor(0, 5);
   u8g2.print("A: ");
-  u8g2.print(value0, 3);
+  if(mode0 == 1)
+    u8g2.print(value0, 0);
+  else
+    u8g2.print(value0, 3);
 
   byte oldX = u8g2.tx;
 
@@ -318,7 +321,10 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
 
   u8g2.setCursor(0, 20);
   u8g2.print("B: ");
-  u8g2.print(value1, 3);
+  if(mode1 == 1)
+    u8g2.print(value1, 0);
+  else
+    u8g2.print(value1, 3);
 
   oldX = u8g2.tx;
 
@@ -351,7 +357,10 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
 
   u8g2.setCursor(0, 35);
   u8g2.print("C: ");
-  u8g2.print(value2, 3);
+  if(mode2 == 1)
+    u8g2.print(value2, 0);
+  else
+    u8g2.print(value2, 3);
 
   oldX = u8g2.tx;
 
@@ -384,8 +393,10 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
 
   u8g2.setCursor(0, 50);
   u8g2.print("D: ");
-  u8g2.print(value3, 3);
-
+  if(mode3 == 1)
+    u8g2.print(value3, 0);
+  else
+    u8g2.print(value3, 3);
   oldX = u8g2.tx;
 
   switch (mode3)
