@@ -145,11 +145,11 @@ float getVal(byte channel = 0, byte mode = 0)
     res = ((adcSensor.computeVolts(val) - chanVref) * (maxVolt / chanIdealVref));
     break;
   case 1:
-    res = (adcSensor.computeVolts(val) / ohmsFormA) * chanelmAconst;
+    res = (adcSensor.computeVolts(val) * ohmsFormA) * chanelmAconst;
     res = res * 1000;
     break;
   case 2:
-    res = (adcSensor.computeVolts(val) / ohmsForuA) * chaneluAconst;
+    res = (adcSensor.computeVolts(val) * ohmsForuA) * chaneluAconst;
     break;
   default:
     res = ((adcSensor.computeVolts(val) - chanVref) * (maxVolt / chanIdealVref));
@@ -308,6 +308,8 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
   u8g2.print("A: ");
   if(mode0 == 1)
     u8g2.print(value0, 0);
+  else if(mode0 == 2)
+    u8g2.print(value0, 0);
   else
     u8g2.print(value0, 3);
 
@@ -343,6 +345,8 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
   u8g2.setCursor(0, 20);
   u8g2.print("B: ");
   if(mode1 == 1)
+    u8g2.print(value1, 0);
+  else if(mode1 == 2)
     u8g2.print(value1, 0);
   else
     u8g2.print(value1, 3);
@@ -380,6 +384,8 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
   u8g2.print("C: ");
   if(mode2 == 1)
     u8g2.print(value2, 0);
+  else if(mode2 == 2)
+    u8g2.print(value2, 0);
   else
     u8g2.print(value2, 3);
 
@@ -415,6 +421,8 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
   u8g2.setCursor(0, 50);
   u8g2.print("D: ");
   if(mode3 == 1)
+    u8g2.print(value3, 0);
+  else if(mode3 == 2)
     u8g2.print(value3, 0);
   else
     u8g2.print(value3, 3);
