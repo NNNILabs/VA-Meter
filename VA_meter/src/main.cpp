@@ -3,6 +3,7 @@
 #include <Adafruit_ADS1X15.h>
 #include <Wire.h>
 #include <Encoder.h>
+#include <EEPROM.h>
 
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
@@ -76,8 +77,13 @@ void setup(void)
   u8g2.drawStr(18, 52, "software by DDL");
   u8g2.sendBuffer();
   u8g2.setFontPosTop();
-  delay(1000);
+  EEPROM.get(0, modeA);
+  EEPROM.get(1, modeB);
+  EEPROM.get(2, modeC);
+  EEPROM.get(3, modeD);
 
+
+  delay(1000);
   digitalWrite(LED_BUILTIN, LOW); // indicates the end of the startup process
 }
 
@@ -214,6 +220,13 @@ byte encoderTick()
   return ret;
 }
 
+void saveModes(){
+  EEPROM.put(0, modeA);
+  EEPROM.put(1, modeB);
+  EEPROM.put(2, modeC);
+  EEPROM.put(3, modeD);
+}
+
 void displayDraw(float value0, float value1, float value2, float value3, byte mode0 = 0, byte mode1 = 0, byte mode2 = 0, byte mode3 = 0)
 {
   static bool locked = true;
@@ -295,6 +308,7 @@ void displayDraw(float value0, float value1, float value2, float value3, byte mo
   {
     locked = true;
     currentEntered = -1;
+    saveModes();
     currSelection = 0;
   }
 
